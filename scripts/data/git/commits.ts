@@ -17,25 +17,83 @@ const commits: {
     }
 } = {};
 
-function getCommits(repoId: string, fromDate: Date, skip: number, top: number, author: string): Q.IPromise<GitCommitRef[]> {
+function getBranches(repoId: string): Q.Promise<string[]> {
     const webContext = VSS.getWebContext();
-    const commitsUrl = webContext.collection.uri +
+    const branchesUrl = webContext.collection.uri +
         "_apis/git/repositories/" +
-         repoId +
-          "/Commits?api-version=1.0" +
-          "&fromDate=" + encodeURIComponent(fromDate.toJSON()) +
-          "&author=" + encodeURIComponent(author) +
-          "&$skip=" + skip +
-          "&$top=" + top;
+        repoId +
+        "/refs?filter=heads/&api-version=6.0";
 
-    const defered = Q.defer<GitCommitRef[]>();
-    callApi(commitsUrl, "GET", undefined, undefined, (commits) => defered.resolve(commits.value), (error) => defered.reject(error));
+    const defered = Q.defer<string[]>();
+    callApi(branchesUrl, "GET", undefined, undefined, (branches) => {
+        const branchNames = branches.value.map((branch) => branch.name);
+        defered.resolve(branchNames);
+    }, (error) => defered.reject(error));
+
     return defered.promise;
 }
 
+function getCommitsFromAllBranches(repoId: string, fromDate: Date, skip: number, top: number, author: string): Q.IPromise<GitCommitRef[]> {
+    const defered = Q.defer<GitCommitRef[]>();
+
+    getBranches(repoId).then((branches) => {
+        const allCommits: GitCommitRef[] = [];
+
+        // Função auxiliar para obter commits de uma branch específica
+        const getCommitsFromBranch = (branch: string): Q.IPromise<void> => {
+            branch = branch.replace("refs/heads/", "");
+            const commitsUrl = VSS.getWebContext().collection.uri +
+                "_apis/git/repositories/" +
+                repoId +
+                "/Commits?api-version=4.1" +
+                "&searchCriteria.itemVersion.version=" + encodeURIComponent(branch) +
+                "&searchCriteria.itemVersion.versionType=branch" +
+                "&searchCriteria.author=" + encodeURIComponent(author) +
+                "&fromDate=" + encodeURIComponent(fromDate.toJSON()) +
+                "&author=" + encodeURIComponent(author) +
+                "&$skip=" + skip +
+                "&$top=" + top;
+
+            const branchDeferred = Q.defer<void>();
+            callApi(commitsUrl, "GET", undefined, undefined, (commits) => {
+                allCommits.push(...commits.value);
+                branchDeferred.resolve();
+            }, (error) => branchDeferred.reject(error));
+
+            return branchDeferred.promise;
+        };
+
+        const branchPromises = branches.map((branch) => getCommitsFromBranch(branch));
+
+        Q.all(branchPromises).then(() => {
+            defered.resolve(allCommits);
+        }).catch((error) => defered.reject(error));
+
+    }).catch((error) => defered.reject(error));
+
+    return defered.promise;
+}
+
+
+// function getCommits(repoId: string, fromDate: Date, skip: number, top: number, author: string): Q.IPromise<GitCommitRef[]> {
+//     const webContext = VSS.getWebContext();
+//     const commitsUrl = webContext.collection.uri +
+//         "_apis/git/repositories/" +
+//          repoId +
+//           "/Commits?api-version=1.0" +
+//           "&fromDate=" + encodeURIComponent(fromDate.toJSON()) +
+//           "&author=" + encodeURIComponent(author) +
+//           "&$skip=" + skip +
+//           "&$top=" + top;
+
+//     const defered = Q.defer<GitCommitRef[]>();
+//     callApi(commitsUrl, "GET", undefined, undefined, (commits) => defered.resolve(commits.value), (error) => defered.reject(error));
+//     return defered.promise;
+// }
+
 const batchSize = 2000;
 async function commitsForRepository(username: string, repoId: string, skip = 0): Promise<GitCommitRef[]> {
-    return getCommits(repoId, yearStart, skip, batchSize, username).then(commits => {
+    return getCommitsFromAllBranches(repoId, yearStart, skip, batchSize, username).then(commits => {
         if (commits.length < batchSize) {
             return commits.filter((c) => !c.comment.match(/Merged PR \d+/));
         } else {

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { IUserContributions } from "../data/contracts";
-import { Graph } from "./Graph";
+import { Graph } from "./graph";
 
 export class Graphs extends React.Component<{
     contributions: IUserContributions[],

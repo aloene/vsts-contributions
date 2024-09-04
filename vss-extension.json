@@ -1,14 +1,14 @@
 {
     "manifestVersion": 1,
     "id": "contributions",
-    "version": "2.1.26",
+    "version": "2.1.34",
     "name": "Contributions Graph",
     "scopes": [
         "vso.work",
         "vso.code"
     ],
     "description": "View account contributions by user.",
-    "publisher": "ottostreifel",
+    "publisher": "AdilsonDias",
     "icons": {
         "default": "img/logo.png"
     },
@@ -54,7 +54,8 @@
         }
     ],
     "categories": [
-        "Collaborate"
+        "Azure Boards",
+        "Azure Repos"
     ],
     "contributions": [
         {

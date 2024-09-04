@@ -1,4 +1,4 @@
-import { IToggleProps, Toggle } from "office-ui-fabric-react/lib-amd/components/toggle";
+import { IToggleProps, Toggle } from "office-ui-fabric-react/lib/Toggle";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -3,7 +3,7 @@ const gulp = require('gulp');
 const del = require("del");
 const yargs = require("yargs");
 const {exec, execSync} = require('child_process');
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 const tslint = require('gulp-tslint');
 const inlinesource = require('gulp-inline-source');
 

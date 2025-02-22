@@ -1,4 +1,3 @@
-import { trackEvent } from "../events";
 import { IContributionFilter, IIndividualContributionFilter } from "../filter";
 import { IContributionProvider, IUserContributions, UserContribution } from "./contracts";
 import { CommitContributionProvider } from "./git/commits";
@@ -45,7 +44,6 @@ async function hardGetContributions(filter: IIndividualContributionFilter) {
             .filter(p => filter.enabledProviders[p.name])
             .map(p => p.getContributions(filter).then((r) => r, (e) => {
                 console.log("Error ", e);
-                trackEvent("contributionError", { "message": "" + e }, undefined);
                 return [];
             }))
     );

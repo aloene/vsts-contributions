@@ -1,5 +1,4 @@
 import { IIdentity } from "./controls/IdentityPicker";
-import { IProperties } from "./events";
 import { CachedValue } from "./data/CachedValue";
 import { defaultRepostory } from "./data/git/repositories";
 
@@ -41,18 +40,6 @@ export function deepEqual(x, y): boolean {
     Object.keys(x).reduce(function (isEqual, key) {
       return isEqual && deepEqual(x[key], y[key]);
     }, true) : (x === y);
-}
-
-export function filterToIProperties(filter: IContributionFilter): IProperties {
-  const properties: IProperties = {};
-  for (let providerKey in filter.enabledProviders) {
-    properties[providerKey] = String(filter.enabledProviders[providerKey]);
-  }
-  properties["allProjects"] = String(!!filter.allProjects);
-  properties["sharedScale"] = String(!!filter.sharedScale);
-  properties["identityCount"] = filter.identities.length + "";
-  properties["plainTextIdentityCount"] = filter.identities.filter(({ id }) => !id).length + "";
-  return properties;
 }
 
 export const defaultFilter: CachedValue<IContributionFilter> = new CachedValue(getDefaultFilter);
